@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Link Set Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: #2d2d2d;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h1 {
+            color: #4a9eff;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .login-box p {
+            color: #999;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b0b0b0;
+            font-size: 14px;
+        }
+
+        .input-group input[type="password"],
+        .input-group input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #4a9eff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #3a8eef;
+        }
+
+        .error-msg {
+            color: #ff6b6b;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .dashboard {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .top-bar {
+            background: #2d2d2d;
+            padding: 15px 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .top-bar h1 {
+            color: #4a9eff;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .user-menu {
+            position: relative;
+        }
+
+        .user-btn {
+            background: #363636;
+            color: #e0e0e0;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .user-btn:hover {
+            background: #404040;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: #2d2d2d;
+            border: 1px solid #404040;
+            border-radius: 4px;
+            min-width: 150px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            border-bottom: 1px solid #404040;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+            color: #ff6b6b;
+        }
+
+        .dropdown-item:hover {
+            background: #363636;
+        }
+
+        .search-section {
+            background: #2d2d2d;
+            padding: 20px 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: #363636;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #404040;
+        }
+
+        .filter-btn.active {
+            background: #4a9eff;
+            border-color: #4a9eff;
+            color: white;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #4a9eff;
+        }
+
+        .stat-label {
+            color: #999;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .content-area {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+        }
+
+        .sidebar {
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar h3 {
+            color: #4a9eff;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .batch-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .batch-link {
+            display: block;
+            padding: 10px 12px;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .batch-link:hover {
+            background: #363636;
+        }
+
+        .batch-link.active {
+            background: #4a9eff;
+            color: white;
+        }
+
+        .main-content {
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .batch-header {
+            margin-bottom: 20px;
+        }
+
+        .batch-title {
+            font-size: 20px;
+            color: #4a9eff;
+            font-weight: 600;
+        }
+
+        .batch-info {
+            color: #999;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .sets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .set-card {
+            background: #363636;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 15px;
+            transition: all 0.2s;
+        }
+
+        .set-card:hover {
+            border-color: #4a9eff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(74, 158, 255, 0.1);
+        }
+
+        .set-name {
+            color: #e0e0e0;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 12px;
+        }
+
+        .set-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .share-btn {
+            background: #4caf50;
+            color: white;
+        }
+
+        .share-btn:hover {
+            background: #45a049;
+        }
+
+        .view-btn {
+            background: #2196f3;
+            color: white;
+        }
+
+        .view-btn:hover {
+            background: #1976d2;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #4caf50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 2000;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .bulk-btn {
+            padding: 8px 16px;
+            background: #363636;
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: #e0e0e0;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .bulk-btn:hover {
+            background: #4a9eff;
+            border-color: #4a9eff;
+        }
+
+        @media (max-width: 768px) {
+            .content-area {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: static;
+            }
+
+            .sets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h1>Private Link Set Manager</h1>
+            <p>Admin Access Only</p>
+            <div class="input-group">
+                <label for="passwordInput">Enter Password</label>
+                <input type="password" id="passwordInput" placeholder="Enter your password">
+            </div>
+            <div class="input-group">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="rememberMe" style="width: auto; margin-right: 8px;">
+                    <span>Remember me on this device</span>
+                </label>
+            </div>
+            <button class="btn" onclick="checkPassword()">Access Dashboard</button>
+            <div class="error-msg" id="errorMsg">Incorrect password. Please try again.</div>
+        </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard" id="dashboard">
+        <div class="top-bar">
+            <h1>Private Link Set Manager</h1>
+            <div class="user-menu">
+                <button class="user-btn" onclick="toggleDropdown()">
+                    <span>Admin</span>
+                    <span>▼</span>
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div class="dropdown-item" onclick="refreshData()">Refresh Data</div>
+                    <div class="dropdown-item" onclick="exportAllLinks()">Export All Links</div>
+                    <div class="dropdown-item" onclick="logout()">Logout</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search for batches or sets..." oninput="performSearch()">
+                <span class="search-icon">🔍</span>
+            </div>
+            <div class="filters">
+                <button class="filter-btn active" onclick="filterByType('all')">All</button>
+                <button class="filter-btn" onclick="filterByType('recent')">Recently Added</button>
+                <button class="filter-btn" onclick="filterByType('batch')">By Batch</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalBatches">0</div>
+                <div class="stat-label">Total Batches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalSets">0</div>
+                <div class="stat-label">Total Sets</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalLinks">0</div>
+                <div class="stat-label">Total Links</div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <div class="sidebar">
+                <h3>Batches</h3>
+                <div class="batch-list" id="batchList"></div>
+            </div>
+            <div class="main-content">
+                <div id="mainContent">
+                    <div class="loading">Loading data from repository...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">Link copied to clipboard!</div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            password: 'Nihab543#*',
+            githubUser: 'othersott',
+            githubRepo: 'url',
+            githubBranch: 'main'
+        };
+
+        let allData = {};
+        let currentBatch = null;
+        let searchQuery = '';
+
+        // Generate GitHub Pages URL
+        function getGithubPagesUrl(batch, set) {
+            return `https://${CONFIG.githubUser}.github.io/${CONFIG.githubRepo}/${batch}/${set}`;
+        }
+
+        // Generate GitHub API URL
+        function getGithubApiUrl(path = '') {
+            return `https://api.github.com/repos/${CONFIG.githubUser}/${CONFIG.githubRepo}/contents/${path}?ref=${CONFIG.githubBranch}`;
+        }
+
+        // Password Check
+        function checkPassword() {
+            const input = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            if (input === CONFIG.password) {
+                if (rememberMe) {
+                    localStorage.setItem('dashboardAuth', 'authenticated');
+                }
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                initDashboard();
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        // Check if user is already authenticated
+        function checkAuth() {
+            if (localStorage.getItem('dashboardAuth') === 'authenticated') {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                initDashboard();
+            }
+        }
+
+        // Allow Enter key to submit password
+        document.addEventListener('DOMContentLoaded', function() {
+            const passwordInput = document.getElementById('passwordInput');
+            if (passwordInput) {
+                passwordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        checkPassword();
+                    }
+                });
+            }
+            checkAuth();
+        });
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('dashboardAuth');
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('rememberMe').checked = false;
+            document.getElementById('errorMsg').style.display = 'none';
+            toggleDropdown();
+        }
+
+        // Toggle Dropdown Menu
+        function toggleDropdown() {
+            const dropdown = document.getElementById('dropdownMenu');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const userMenu = document.querySelector('.user-menu');
+            const dropdown = document.getElementById('dropdownMenu');
+            if (dropdown && !userMenu.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Initialize Dashboard
+        async function initDashboard() {
+            await loadDataFromGithub();
+        }
+
+        // Load Data from GitHub Repository
+        async function loadDataFromGithub() {
+            try {
+                const response = await fetch(getGithubApiUrl());
+                const items = await response.json();
+                
+                // Filter only directories that match batch pattern
+                const batches = items.filter(item => 
+                    item.type === 'dir' && item.name.startsWith('batch-')
+                ).sort((a, b) => a.name.localeCompare(b.name));
+
+                // Load sets for each batch
+                for (const batch of batches) {
+                    const setsResponse = await fetch(getGithubApiUrl(batch.name));
+                    const setsData = await setsResponse.json();
+                    
+                    // Filter only HTML files
+                    const htmlFiles = setsData.filter(item => 
+                        item.type === 'file' && item.name.endsWith('.html')
+                    ).map(item => item.name).sort();
+                    
+                    allData[batch.name] = htmlFiles;
+                }
+
+                renderSidebar();
+                updateStats();
+                
+                // Show first batch by default
+                const firstBatch = Object.keys(allData)[0];
+                if (firstBatch) {
+                    showBatch(firstBatch);
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('mainContent').innerHTML = `
+                    <div class="no-results">
+                        <p>Error loading data from repository.</p>
+                        <p>Please check your configuration.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Render Sidebar
+        function renderSidebar() {
+            const batchList = document.getElementById('batchList');
+            batchList.innerHTML = '';
+
+            Object.keys(allData).forEach(batch => {
+                const link = document.createElement('a');
+                link.href = '#';
+                link.className = 'batch-link';
+                link.textContent = batch;
+                link.onclick = (e) => {
+                    e.preventDefault();
+              
