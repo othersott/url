@@ -1,4 +1,4 @@
-name: Sync Files to Second Repository
+name: Sync Files to Second Repository (Template File)
 
 on:
   push:
@@ -34,18 +34,35 @@ jobs:
           token: ${{ secrets.SECOND_REPO_TOKEN }}
           path: second-repo
       
-      - name: Create empty files in second repository
+      - name: Create files with template content in second repository
         run: |
           cd second-repo
+          
+          # Template file এর path (প্রথম রিপোজিটরিতে)
+          TEMPLATE_FILE="../.template/default-template.html"
+          
+          # Template file আছে কিনা চেক করা
+          if [ ! -f "$TEMPLATE_FILE" ]; then
+            echo "Warning: Template file not found at $TEMPLATE_FILE"
+            echo "Creating empty files instead"
+            TEMPLATE_FILE=""
+          fi
           
           while IFS= read -r file; do
             if [ -n "$file" ]; then
               echo "Processing: $file"
               
+              # ফাইলের ডিরেক্টরি তৈরি করা
               mkdir -p "$(dirname "$file")"
-              touch "$file"
               
-              echo "Created empty file: $file"
+              # Template থেকে কোড কপি করা
+              if [ -n "$TEMPLATE_FILE" ] && [ -f "$TEMPLATE_FILE" ]; then
+                cp "$TEMPLATE_FILE" "$file"
+                echo "Created file with template: $file"
+              else
+                touch "$file"
+                echo "Created empty file: $file"
+              fi
             fi
           done < ../changed_files.txt
       
@@ -58,7 +75,7 @@ jobs:
           git add .
           
           if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Synced empty files from othersott/url-1"
+            git commit -m "Synced files with template from othersott/url-1"
             git push
             echo "Changes pushed successfully!"
           else
