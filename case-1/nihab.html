@@ -1,1 +1,66 @@
+name: Sync Files to Second Repository
 
+on:
+  push:
+    branches:
+      - main  # যদি আপনার ব্রাঞ্চের নাম 'master' হয় তাহলে এখানে master লিখুন
+
+jobs:
+  sync-files:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout first repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      
+      - name: Get changed files
+        id: changed-files
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            git diff --name-only --diff-filter=ACR HEAD^..HEAD > changed_files.txt
+          else
+            git ls-tree -r --name-only HEAD > changed_files.txt
+          fi
+          
+          echo "Changed files:"
+          cat changed_files.txt
+      
+      - name: Checkout second repository
+        uses: actions/checkout@v3
+        with:
+          repository: othersott/test2  # আপনার দ্বিতীয় রিপোজিটরির নাম
+          token: ${{ secrets.SECOND_REPO_TOKEN }}
+          path: second-repo
+      
+      - name: Create empty files in second repository
+        run: |
+          cd second-repo
+          
+          while IFS= read -r file; do
+            if [ -n "$file" ]; then
+              echo "Processing: $file"
+              
+              mkdir -p "$(dirname "$file")"
+              touch "$file"
+              
+              echo "Created empty file: $file"
+            fi
+          done < ../changed_files.txt
+      
+      - name: Commit and push to second repository
+        run: |
+          cd second-repo
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          
+          git add .
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Synced empty files from othersott/test"
+            git push
+            echo "Changes pushed successfully!"
+          else
+            echo "No changes to commit"
+          fi
