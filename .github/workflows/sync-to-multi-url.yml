@@ -1,0 +1,98 @@
+name: Sync to Multiple URL Repositories
+
+on:
+  push:
+    branches:
+      - main  # যদি আপনার ব্রাঞ্চের নাম 'master' হয় তাহলে master লিখুন
+
+jobs:
+  sync-to-url-repos:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout url-1 repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      
+      - name: Get changed files
+        id: changed-files
+        run: |
+          if [ "${{ github.event_name }}" == "push" ]; then
+            git diff --name-only --diff-filter=ACR HEAD^..HEAD > changed_files.txt
+          else
+            git ls-tree -r --name-only HEAD > changed_files.txt
+          fi
+          
+          echo "Changed files:"
+          cat changed_files.txt
+      
+      - name: Checkout url-2 repository
+        uses: actions/checkout@v3
+        with:
+          repository: othersott/url-2
+          token: ${{ secrets.REPO_TOKEN }}
+          path: url-2-repo
+      
+      - name: Checkout url-3 repository
+        uses: actions/checkout@v3
+        with:
+          repository: othersott/url-3
+          token: ${{ secrets.REPO_TOKEN }}
+          path: url-3-repo
+      
+      - name: Create blank files in url-2
+        run: |
+          cd url-2-repo
+          
+          while IFS= read -r file; do
+            if [ -n "$file" ]; then
+              echo "Creating in url-2: $file"
+              mkdir -p "$(dirname "$file")"
+              touch "$file"
+            fi
+          done < ../changed_files.txt
+      
+      - name: Create blank files in url-3
+        run: |
+          cd url-3-repo
+          
+          while IFS= read -r file; do
+            if [ -n "$file" ]; then
+              echo "Creating in url-3: $file"
+              mkdir -p "$(dirname "$file")"
+              touch "$file"
+            fi
+          done < ../changed_files.txt
+      
+      - name: Commit and push to url-2
+        run: |
+          cd url-2-repo
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          
+          git add .
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Synced blank files from url-1"
+            git push
+            echo "✅ url-2 updated successfully!"
+          else
+            echo "No changes in url-2"
+          fi
+      
+      - name: Commit and push to url-3
+        run: |
+          cd url-3-repo
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          
+          git add .
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git commit -m "Synced blank files from url-1"
+            git push
+            echo "✅ url-3 updated successfully!"
+          else
+            echo "No changes in url-3"
+          fi
